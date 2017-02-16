@@ -14,6 +14,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.URI;
 import java.util.regex.Pattern;
 
@@ -30,14 +31,20 @@ public class WebApp extends ResourceConfig {
     @GET
     @Path("hashToPhone/{sha1}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String hashToPhone(@PathParam("sha1") final String sha1) throws IOException {
+    public String hashToPhone(@PathParam("sha1") final String sha1) {
         if (sha1 == null || sha1.length() != 40 || !sha1regex.matcher(sha1).matches())
             return "sha1 hash must be 40 character hexadecimal";
-        final PhoneComparator pc = new PhoneComparator();
-        final byte[] needle = hexToBytes(sha1);
-        try (RandomAccessFileList<Long> list = new RandomAccessFileList<>(sortedPhoneNumberList, LongConverter40Bit.instance)) {
-            final long index = list.indexedBinarySearch(needle, pc);
-            return index < 0 ? "Not found" : PhoneComparator.formatPhoneNumber(list.get(index));
+        try {
+            final PhoneComparator pc = new PhoneComparator();
+            final byte[] needle = hexToBytes(sha1);
+            try (RandomAccessFile raf = new RandomAccessFile(sortedPhoneNumberList, "r");
+                 RandomAccessFileList<Long> list = new RandomAccessFileList<>(raf, LongConverter40Bit.instance)) {
+                final long index = list.indexedBinarySearch(needle, pc);
+                return index < 0 ? "Not found" : PhoneComparator.formatPhoneNumber(list.get(index));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error";
         }
     }
 
