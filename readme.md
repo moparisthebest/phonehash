@@ -5,6 +5,8 @@ Quickly reverse Kontalk sha1 hashes to phone numbers
 
 They already know this isn't much protection, but I wanted to see how fast I could go from hash to phone number, and it turned out to be harder than I thought.  I'll try to walk you through my thought process here.
 
+tl;dr I put all 11 digit phone numbers represented as 5 byte integers in a 500gb file sorted by their sha1 hashes, now I can binary search it fast.
+
 We are talking about 100 billion possible numbers here, 0 - 99,999,999,999.  The smallest number of bytes that number can be represented with is 5, and a sha1 hash is 20 bytes.  So if you wanted to generate and store the entire list of sha1 hashes and phone numbers, you'd need 100,000,000,000 * 25 bytes of space, or 2.5 TB.  I don't care to waste that much space on this, so I decided to store only the phone numbers (500 GB), but sorted by the sha1 hash, by generating the sha1 hash to sort, and only writing phone numbers to disk.  The good news is that, if this list is sorted, a [binary search](https://en.wikipedia.org/wiki/Binary_search_algorithm) only costs O(log n) in the worst case, so that's worst case computing 26 sha1 hashes on each search, which will be plenty fast on even the most modest of hardware.
 
 Interestingly as a side-note this is the first time I have been bitten by java only supporting 32-bit signed integers as array indices, as this requires a much bigger array.  I ended up writing a [List implementation backed by a RandomAccessFile](https://github.com/moparisthebest/filelists) just for this very purpose.
