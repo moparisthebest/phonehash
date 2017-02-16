@@ -15,7 +15,11 @@ function unhash() {
 }
 
 $(document).ready(function () {
-    //alert('bob');
+    var anchor_hash = $(location).attr('hash').substr(1);
+    if(valid_sha1.test(anchor_hash)) {
+        $('#hash').val(anchor_hash);
+        unhash();
+    }
     $('#hash').keypress(function (e) {
         if (e.which == 13) { // enter
             unhash();
